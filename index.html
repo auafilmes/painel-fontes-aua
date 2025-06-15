@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Administração de Fontes</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button, select { margin: 5px 0; padding: 5px; width: 100%; }
+    .fonte { border-bottom: 1px solid #ccc; margin-bottom: 10px; padding-bottom: 10px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h2>Painel de Administração de Fontes Monitoradas</h2>
+  <div id="login">
+    <input type="password" id="senha" placeholder="Digite a senha de acesso" />
+    <button onclick="verificarSenha()">Entrar</button>
+  </div>
+  <div id="painel" class="hidden">
+    <h3>Nova Fonte</h3>
+    <input type="text" id="nome" placeholder="Nome da Fonte" />
+    <input type="text" id="url" placeholder="URL da Página" />
+    <input type="text" id="seletor_titulo" placeholder="Seletor do Título" />
+    <input type="text" id="seletor_prazo" placeholder="Seletor do Prazo (opcional)" />
+    <input type="text" id="tipo" placeholder="Tipo (edital, serviço, etc.)" />
+    <label><input type="checkbox" id="ativo" checked /> Ativo</label><br/>
+    <button onclick="adicionarFonte()">Cadastrar Fonte</button>
+    <hr/>
+    <h3>Fontes Cadastradas</h3>
+    <div id="listaFontes"></div>
+  </div>
+
+<script>
+  const SENHA_FIXA = "*R82l09W17m";
+  const SUPABASE_URL = "https://jkzwqiemyaklnoyuarpf.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImprendxaWVteWFrbG5veXVhcnBmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5NTUyMzMsImV4cCI6MjA2NTUzMTIzM30.JmwNrGudAn9YOX1d5gTyZ6jMLD9MHwj7y1QJKlH4YSE";
+  const TABELA = "fontes_monitoradas";
+
+  function verificarSenha() {
+    const senha = document.getElementById("senha").value;
+    if (senha === SENHA_FIXA) {
+      document.getElementById("login").classList.add("hidden");
+      document.getElementById("painel").classList.remove("hidden");
+      carregarFontes();
+    } else {
+      alert("Senha incorreta.");
+    }
+  }
+
+  async function adicionarFonte() {
+    const data = {
+      nome: document.getElementById("nome").value,
+      url: document.getElementById("url").value,
+      seletor_titulo: document.getElementById("seletor_titulo").value,
+      seletor_prazo: document.getElementById("seletor_prazo").value,
+      tipo: document.getElementById("tipo").value,
+      ativo: document.getElementById("ativo").checked
+    };
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABELA}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+      alert("Fonte cadastrada com sucesso.");
+      carregarFontes();
+    } else {
+      alert("Erro ao cadastrar fonte.");
+    }
+  }
+
+  async function carregarFontes() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABELA}?select=*`, {
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`
+      }
+    });
+    const dados = await res.json();
+    const container = document.getElementById("listaFontes");
+    container.innerHTML = "";
+    dados.forEach(fonte => {
+      const div = document.createElement("div");
+      div.className = "fonte";
+      div.innerHTML = `<strong>${fonte.nome}</strong><br/>${fonte.url}<br/><em>${fonte.tipo}</em>`;
+      container.appendChild(div);
+    });
+  }
+</script>
+</body>
+</html>
